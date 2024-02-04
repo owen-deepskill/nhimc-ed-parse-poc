@@ -1,46 +1,55 @@
-import openai
+# Next steps: label data; RAG, 파인튜닝
+
+from openai import OpenAI
+import streamlit as st
 from dotenv import load_dotenv, find_dotenv
-from langchain.chains import OpenAIChain
+_ = load_dotenv(find_dotenv())
 
-_ = load_dotenv(find_dotenv())  # read local .env file
+client = OpenAI()
 
+SYSTEM_MESSAGE = """
+**Instruction Prompt for Classifying Emergency Room Medical Descriptions:**
 
-# OpenAI API 키 설정 (환경 변수에서 불러오거나 직접 지정)
-openai.api_key = 'your_openai_api_key_here'
+When given a medical description from an emergency department context, 
+classify the description according to the following categories. 
+Provide the rationale for your classification(s), and note that multiple classifications are possible.
+Additionally, you may summarize any supplementary information, only if it is deemed to be helpful.
+Do the thinking process in English, then translate the final output into Korean.
 
-# LangChain을 사용하여 OpenAI GPT-4 체인 초기화
-gpt_chain = OpenAIChain(model="gpt-4")
+Categories:
+1. Alcohol related
+2. Accommodation or food
+3. Assault or trauma
+4. Abdominal pain
+5. Headache
+6. Chest pain
+7. Allergy
+8. Shortness of breath
+9. Falls
+10. Poisoning
+11. Motor vehicle accident
+12. Abnormal heart beat
+13. Suicide
 
-def classify_items(items, categories):
-    classified_results = []
-    reasons = []
+**Example Input:**
+AA AMNESIC TO EVENTS SMALL LACERATION TO RI
 
-    for item in items:
-        # 각 항목에 대해 GPT-4를 사용하여 분류 질문 생성 및 호출
-        prompt = f"{item}은(는) 다음 중 어떤 카테고리에 속하나요? {', '.join(categories)}"
-        response = gpt_chain.run(prompt)
-        
-        # 분류 결과 추출
-        classified_category = response.choices[0].text.strip()
-        classified_results.append(classified_category)
-        
-        # 분류 사유 질문 생성 및 호출
-        reason_prompt = f"왜 {item}은(는) {classified_category}인가요?"
-        reason_response = gpt_chain.run(reason_prompt)
-        
-        # 분류 사유 추출
-        reason = reason_response.choices[0].text.strip()
-        reasons.append(reason)
+**Example Output:**
+분류 1: 3 Assault or trauma (사건에 대한 기억상실("AMNESIC TO EVENTS") 언급은 기억 손실을 일으킨 가능한 외상을 제안합니다. "RI에 대한 작은 찰과상"은 폭행이나 외상으로 인해 발생할 수 있는 신체적 손상을 나타냅니다.)
+분류 2: 9 Falls (찰과상은 특히 기억상실이 환자가 넘어져 부상을 입은 사건과 관련이 있는 경우, 낙상을 나타낼 수도 있습니다.)
+참조: 상황을 가장 잘 분류하기 위해 설명된 손상의 기전이나 근본적인 원인을 고려하세요. 예를 들어, 기억상실은 종종 머리 부상으로 인해 발생하는데, 이는 낙상, 폭행, 또는 교통사고로 인해 발생할 수 있습니다. 찰과상은 일반적으로 날카로운 부상과 관련이 있으며, 이는 외상과 관련된 분류를 지원할 수 있습니다.
+"""
 
-    return classified_results, reasons
+def categorize_and_explain(text):
+    messages = [
+        {"role": "system", "content": SYSTEM_MESSAGE},
+        {"role": "user", "content": text}
+    ]
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo-0125",
+        messages=messages,
+        temperature=0
+    )
+    return(response.choices[0].message.content)
 
-# 입력 데이터
-items = ["사과", "호랑이", "배", "곰"]
-categories = ["과일", "동물"]
-
-# 분류 실행
-classified_results, reasons = classify_items(items, categories)
-
-# 결과 출력
-print("분류 값:", classified_results)
-print("분류 사유:", reasons)
+print(categorize_and_explain("ABDO PAIN DIFFICULITY USING BOWELS REPORTS"))
