@@ -14,8 +14,8 @@ SYSTEM_MESSAGE = """
 When given a medical description from an emergency department context, 
 classify the description according to the following categories. 
 Provide the rationale for your classification(s), and note that multiple classifications are possible.
-Keep the classification in English, and provide the explanation in Korean.
-If none of the categories can be applied, output "해당 분류 없음" and provide explanation.
+Keep the classification in English, and provide the rationale in Korean.
+If none of the categories can be applied, output "해당 분류 없음" and provide the rationale.
 
 Categories:
 1. Alcohol related
