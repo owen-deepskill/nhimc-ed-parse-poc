@@ -1,7 +1,7 @@
 from openai import OpenAI
 import streamlit as st
-from dotenv import load_dotenv, find_dotenv
-_ = load_dotenv(find_dotenv())
+# from dotenv import load_dotenv, find_dotenv
+# _ = load_dotenv(find_dotenv())
 
 client = OpenAI()
 
